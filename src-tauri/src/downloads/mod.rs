@@ -1,6 +1,10 @@
 mod manifest;
 mod integrity;
 mod catalog;
+mod transfer;
+mod queue;
+pub use transfer::{transfer_file,TransferControl};
+pub use queue::{DownloadManager,DownloadSnapshot};
 pub use manifest::{ModelManifest, ModelFile, Integrity, validate_relative};
 pub use integrity::verify_file;
 pub use catalog::resolve_manifest;
