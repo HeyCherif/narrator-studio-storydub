@@ -14,7 +14,7 @@ warnings: list[str] = []
 
 # Static Python checks. qwen_tts_worker.py is deliberately included: the old
 # self-test forgot it, so Qwen could be totally broken while preflight said OK.
-for name in ("app.py", "tts_worker.py", "qwen_tts_worker.py", "qc_worker.py", "quality_utils.py"):
+for name in ("app.py", "backend/engine.py", "tts_worker.py", "qwen_tts_worker.py", "qc_worker.py", "quality_utils.py"):
     path = ROOT / name
     if not path.is_file():
         errors.append(f"fichier manquant: {name}")
@@ -27,7 +27,7 @@ for name in ("app.py", "tts_worker.py", "qwen_tts_worker.py", "qc_worker.py", "q
 # Qwen backend routes must actually exist in app.py. A qwen_tts_worker.py lying
 # next to an OmniVoice-only backend is not an integration, merely decoration.
 try:
-    app_source = (ROOT / "app.py").read_text(encoding="utf-8")
+    app_source = (ROOT / "backend/engine.py").read_text(encoding="utf-8")
     required_markers = (
         'QWEN_WORKER_SCRIPT',
         'class QwenWorker',
