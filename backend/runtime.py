@@ -5,12 +5,15 @@ import threading
 import time
 import uuid
 
-from .library import LibraryPaths, LibraryLock, read_history
+from .library import LibraryPaths, LibraryLock, read_history, inspect_legacy
 
 
 class NarratorRuntime:
     def __init__(self, paths: LibraryPaths, emit, lazy=True):
         self.paths, self.emit, self.closed = paths, emit, False
+        if paths.root.exists():
+            errors = inspect_legacy(paths.root).errors
+            if errors: raise ValueError('; '.join(errors))
         self.library_lock = LibraryLock(paths.root)
         self.job_id = ''
         self.operation = None
