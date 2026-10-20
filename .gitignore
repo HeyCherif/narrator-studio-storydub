@@ -24,3 +24,8 @@ model/
 *.bin
 .DS_Store
 Thumbs.db
+node_modules/
+desktop/dist/
+src-tauri/target/
+src-tauri/binaries/
+.superpowers/
