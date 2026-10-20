@@ -26,7 +26,7 @@ def main():
         runtime = NarratorRuntime(LibraryPaths(Path(args.library)), send)
     try:
         for line in sys.stdin:
-            if len(line) > 16_000_000:
+            if len(line) > 32_000_000:
                 send({'id': None, 'ok': False, 'error': {'code': 'message-too-large'}})
                 continue
             request = {}
@@ -48,3 +48,4 @@ def main():
 
 
 if __name__ == '__main__': raise SystemExit(main())
+

@@ -27,7 +27,7 @@ impl Bridge {
         tokio::spawn(async move {
             let mut reader = BufReader::new(output).lines();
             while let Ok(Some(line)) = reader.next_line().await {
-                if line.len() > 16_000_000 { break; }
+                if line.len() > 32_000_000 { break; }
                 if let Ok(value) = serde_json::from_str::<Value>(&line) {
                     if let Some(id) = value.get("id").and_then(Value::as_str) {
                         if let Some(sender) = queue.lock().await.remove(id) { let _ = sender.send(value); }
@@ -47,7 +47,7 @@ impl Bridge {
         let (sender, receiver) = oneshot::channel();
         self.pending.lock().await.insert(id.clone(), sender);
         let serialized = json!({"id":id,"command":command,"payload":payload}).to_string() + "\n";
-        if serialized.len() > 16_000_000 { self.pending.lock().await.remove(&id); return Err("message-too-large".into()); }
+        if serialized.len() > 32_000_000 { self.pending.lock().await.remove(&id); return Err("message-too-large".into()); }
         let write = self.input.lock().await.write_all(serialized.as_bytes()).await;
         if let Err(error) = write { self.pending.lock().await.remove(&id); return Err(error.to_string()); }
         let response = tokio::time::timeout(Duration::from_secs(30), receiver).await;
@@ -65,3 +65,4 @@ impl Bridge {
         self.pending.lock().await.clear();
     }
 }
+

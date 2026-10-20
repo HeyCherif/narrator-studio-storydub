@@ -1089,7 +1089,7 @@ class AppAPI:
         # Preserve any keys that detection added while writing the explicit user-facing paths.
         current.update({k: v for k, v in self.config.items() if k in {
             "storydub_root", "dubroom_root", "runtime_python", "model_path", "voices",
-            "qwen_runtime_python", "qwen_download_python", "qwen_model_path", "defaults"
+            "qwen_runtime_python", "qwen_download_python", "qwen_model_path", "qc_runtime_python", "qc_model_path", "defaults"
         }})
         write_json(CONFIG_PATH, current)
 
