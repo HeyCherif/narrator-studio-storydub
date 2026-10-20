@@ -1,0 +1,39 @@
+[package]
+name = "narrator-studio"
+version = "2.0.0-beta.1"
+edition = "2021"
+
+[lib]
+name = "narrator_studio"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[[bin]]
+name = "NarratorStudio"
+path = "src/main.rs"
+required-features = ["desktop"]
+
+[features]
+default = []
+desktop = ["dep:tauri", "dep:tauri-build", "dep:tauri-plugin-dialog", "dep:tauri-plugin-opener", "dep:tauri-plugin-single-instance"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+futures-util = "0.3"
+sha2 = "0.10"
+sha1 = "0.10"
+hex = "0.4"
+uuid = { version = "1", features = ["v4"] }
+fs2 = "0.4"
+tauri = { version = "2", optional = true, features = ["protocol-asset"] }
+tauri-plugin-dialog = { version = "2", optional = true }
+tauri-plugin-opener = { version = "2", optional = true }
+tauri-plugin-single-instance = { version = "2", optional = true }
+
+[build-dependencies]
+tauri-build = { version = "2", optional = true }
+
+[dev-dependencies]
+tempfile = "3"

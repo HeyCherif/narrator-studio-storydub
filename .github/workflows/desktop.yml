@@ -1,0 +1,23 @@
+name: Narrator Desktop
+on:
+  push:
+    branches: [feature/tauri-studio]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Python contracts
+        run: python -m unittest discover -s tests -v
+      - name: Rust contracts
+        run: cargo test --manifest-path src-tauri/Cargo.toml
