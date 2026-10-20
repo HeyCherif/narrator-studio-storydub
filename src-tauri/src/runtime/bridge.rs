@@ -58,7 +58,7 @@ impl Bridge {
     }
 
     pub async fn shutdown(&self, deadline: Duration) {
-        let _ = self.request("shutdown", json!({})).await;
+        let _ = tokio::time::timeout(deadline, self.request("shutdown", json!({}))).await;
         self.closed.store(true, Ordering::SeqCst);
         let mut child = self.child.lock().await;
         if tokio::time::timeout(deadline, child.wait()).await.is_err() { let _ = child.kill().await; }

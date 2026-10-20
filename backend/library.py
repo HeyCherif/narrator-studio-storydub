@@ -9,6 +9,32 @@ import shutil
 import uuid
 
 
+class LibraryLock:
+    """Nonblocking OS lock; automatically released if the owning process exits."""
+    def __init__(self, root: Path):
+        root.mkdir(parents=True, exist_ok=True)
+        self.stream = (root / '.narrator.lock').open('a+b')
+        try:
+            self.stream.seek(0)
+            if self.stream.read(1) == b'':
+                self.stream.write(b'0')
+                self.stream.flush()
+            self.stream.seek(0)
+            if os.name == 'nt':
+                import msvcrt
+                msvcrt.locking(self.stream.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self.stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            self.stream.close()
+            raise RuntimeError('library-in-use: close the other Narrator Studio instance') from exc
+
+    def close(self):
+        if not self.stream.closed:
+            self.stream.close()
+
+
 @dataclass(frozen=True)
 class LibraryPaths:
     root: Path

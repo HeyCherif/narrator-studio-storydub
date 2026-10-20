@@ -29,6 +29,7 @@ class BridgeTests(unittest.TestCase):
         self.assertFalse(self.runtime.core.job['running'])
 
     def test_stdout_contains_only_protocol_lines(self):
+        self.runtime.shutdown()
         requests = '\n'.join(json.dumps({'id': i, 'command': command, 'payload': {}})
                              for i, command in enumerate(('bootstrap', 'not-allowed', 'shutdown')))
         result = subprocess.run([sys.executable, '-m', 'backend.bridge', '--library', self.tmp.name],

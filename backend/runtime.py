@@ -5,12 +5,13 @@ import threading
 import time
 import uuid
 
-from .library import LibraryPaths, read_history
+from .library import LibraryPaths, LibraryLock, read_history
 
 
 class NarratorRuntime:
     def __init__(self, paths: LibraryPaths, emit, lazy=True):
         self.paths, self.emit, self.closed = paths, emit, False
+        self.library_lock = LibraryLock(paths.root)
         self.job_id = ''
         self.operation = None
         self.lock = threading.RLock()
@@ -114,3 +115,4 @@ class NarratorRuntime:
         self.core._set_job(cancel_requested=True)
         for worker in (self.core.worker, self.core.qwen_worker, self.core.qc_worker): worker.kill()
         if self.operation and self.operation is not threading.current_thread(): self.operation.join(timeout_seconds)
+        self.library_lock.close()

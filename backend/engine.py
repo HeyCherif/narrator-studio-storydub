@@ -2117,6 +2117,8 @@ class AppAPI:
 
 def main() -> int:
     import webview
+    from backend.library import LibraryLock
+    library_lock = LibraryLock(ROOT)
     server = LocalServer()
     api = AppAPI(server)
     server.bind_api(api)
@@ -2137,6 +2139,7 @@ def main() -> int:
     finally:
         api.shutdown()
         server.stop()
+        library_lock.close()
     return 0
 
 

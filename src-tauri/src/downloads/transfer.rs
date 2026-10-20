@@ -16,7 +16,7 @@ pub async fn transfer_file(client:&reqwest::Client,url:&str,root:&Path,spec:&Mod
  if let Some(total)=spec.bytes{if fs2::available_space(root).map_err(|e|e.to_string())?<total.saturating_sub(offset)+16*1024*1024{return Err("insufficient-disk-space".into());}}
  atomic_json(&metadata,&serde_json::json!({"revision":revision}))?;
  let mut request=client.get(url);if offset>0{request=request.header(reqwest::header::RANGE,format!("bytes={offset}-"));}
- let response=tokio::select!{result=request.send()=>result.map_err(|e|e.to_string())?,_=async{loop{control.status()?;tokio::time::sleep(std::time::Duration::from_millis(100)).await;}}=>return control.status()};
+ let response=tokio::select!{result=request.send()=>result.map_err(|e|e.to_string())?,_=async{loop{if control.status().is_err(){break;}tokio::time::sleep(std::time::Duration::from_millis(100)).await;}}=>return control.status()};
  let status=response.status();if !status.is_success(){return Err(format!("download-http-{status}"));}
  if offset>0&&status==reqwest::StatusCode::PARTIAL_CONTENT{let expected=format!("bytes {offset}-");if !response.headers().get(reqwest::header::CONTENT_RANGE).and_then(|s|s.to_str().ok()).is_some_and(|s|s.starts_with(&expected)){return Err("invalid-content-range".into());}}
  else{offset=0;}
@@ -25,3 +25,4 @@ pub async fn transfer_file(client:&reqwest::Client,url:&str,root:&Path,spec:&Mod
  loop{control.status()?;let next=tokio::select!{chunk=stream.next()=>chunk,_=tokio::time::sleep(std::time::Duration::from_millis(100))=>continue};match next{Some(chunk)=>{let chunk=chunk.map_err(|e|e.to_string())?;file.write_all(&chunk).await.map_err(|e|e.to_string())?;received+=chunk.len()as u64;if spec.bytes.is_some_and(|size|received>size){return Err("size-overflow".into());}progress(received);},None=>break}}
  file.flush().await.map_err(|e|e.to_string())?;file.sync_all().await.map_err(|e|e.to_string())?;drop(file);control.status()?;verify_file(&part,spec)?;tokio::fs::rename(&part,&target).await.map_err(|e|e.to_string())?;let _=tokio::fs::remove_file(metadata).await;Ok(())
 }
+

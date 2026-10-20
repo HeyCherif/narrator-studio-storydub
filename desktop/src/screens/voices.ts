@@ -1,0 +1,13 @@
+import type {NarratorClient,Voice} from '../types';
+import {t} from '../i18n';
+import {escape,icon,title,showError} from '../components/ui';
+export function mountVoices(container:HTMLElement,client:NarratorClient){
+ let alive=true;
+ container.innerHTML=title('NARRATOR / VOICES',t('voiceTitle'),t('voiceHint'))+`<div class="voice-grid"></div><form class="card clone-panel"><div class="panel-heading">${icon('microphone')}${t('clone')} · Qwen</div><div class="form-row"><label>${t('name')}<input class="form-control" name="name" required maxlength="80"></label><label>${t('language')}<select name="language"><option value="fr">Français</option><option value="en">English</option></select></label><label>${t('reference')}<input type="file" accept="audio/wav,audio/mpeg,audio/flac,audio/ogg,.wav,.mp3,.flac,.ogg" required></label></div><small>${t('fileMax')}</small><p data-error role="status"></p><button class="btn btn-primary" type="submit">${icon('plus')}${t('clone')}</button></form>`;
+ const grid=container.querySelector<HTMLElement>('.voice-grid')!,form=container.querySelector('form')!,status=container.querySelector<HTMLElement>('[data-error]')!,button=form.querySelector('button')!;
+ function cards(voices:Voice[],engine:string){return voices.map(v=>`<article class="voice-card card"><div class="voice-avatar">${icon('wave-sine')}</div><span class="mini-badge">${engine}</span><h3>${escape(v.name||v.id||v.voice_id)}</h3><p>${escape(v.language||'Multilingual')}</p></article>`).join('');}
+ async function load(){try{const values=await client.voices();if(alive)grid.innerHTML=cards(values.omnivoice,'OmniVoice')+cards(values.qwen,'Qwen')||`<div class="empty-state">${icon('microphone-off')}<h3>${t('noVoices')}</h3></div>`;}catch(e){if(alive)showError(status,e);}}
+ const unsubscribe=client.subscribeRuntime(event=>{if(event.event==='job'&&!event.payload.running){button.disabled=false;if(event.payload.error)showError(status,event.payload.error);void load();}});
+ form.onsubmit=async event=>{event.preventDefault();const file=form.querySelector<HTMLInputElement>('[type=file]')!.files?.[0];if(!file)return;if(file.size>20*1024*1024){showError(status,t('fileMax'));return;}button.disabled=true;try{const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));await client.cloneVoice({name:(form.elements.namedItem('name') as HTMLInputElement).value,language:(form.elements.namedItem('language') as HTMLSelectElement).value,filename:file.name,audio_base64:btoa(binary)});if(alive)status.textContent=t('voiceAccepted');}catch(e){if(alive){showError(status,e);button.disabled=false;}}};
+ void load();return()=>{alive=false;unsubscribe();};
+}
