@@ -8,7 +8,8 @@ import { mountStudio } from "./screens/studio";
 import { mountVoices } from "./screens/voices";
 import { mountModels } from "./screens/models";
 import { mountHistory } from "./screens/history";
-const logo = `<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="1" y="1" width="46" height="46" rx="14" fill="#191c31" stroke="#393257"/><path d="M12 31V17l8 14V17m8 14V17l8 14V17" stroke="#a899ff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 24h8" stroke="#61d9de" stroke-width="3.5" stroke-linecap="round"/></svg>`;
+const logoUrl = new URL('./assets/brand/logo.png', import.meta.url).href;
+const logo = `<img src="${logoUrl}" width="46" height="46" alt="" aria-hidden="true">`;
 const client = await createClient();
 let current = "studio",
   cleanup = () => {};

@@ -66,7 +66,7 @@ summary {
   text-decoration: none;
   letter-spacing: -0.7px;
 }
-.brand svg {
+.brand img {
   width: 46px;
   height: 46px;
 }
@@ -744,7 +744,7 @@ footer {
   .sidebar-bottom {
     display: none;
   }
-  .brand svg {
+  .brand img {
     width: 35px;
     height: 35px;
   }
