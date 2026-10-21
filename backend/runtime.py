@@ -17,6 +17,7 @@ class NarratorRuntime:
         self.library_lock = LibraryLock(paths.root)
         self.job_id = ''
         self.operation = None
+        self.operation_active = False
         self.lock = threading.RLock()
         spec = importlib.util.spec_from_file_location('narrator_engine_' + uuid.uuid4().hex,
                                                     Path(__file__).with_name('engine.py'))
@@ -43,13 +44,15 @@ class NarratorRuntime:
 
     def _start(self, kind, payload):
         with self.lock:
-            if self.operation and self.operation.is_alive():
+            if self.closed: raise RuntimeError('closed')
+            if self.operation_active:
                 raise RuntimeError('operation-in-progress')
             if kind == 'generate' and not str(payload.get('text') or '').strip():
                 raise ValueError('text-required')
             if kind == 'generate' and len(str(payload.get('text'))) > 500_000:
                 raise ValueError('text-too-large')
             self.job_id = uuid.uuid4().hex
+            self.operation_active = True
             job_id = self.job_id
             self.core._set_job(running=True, cancel_requested=False, result=None, error='', stage='Preparation', progress=0)
 
@@ -70,22 +73,26 @@ class NarratorRuntime:
                 except Exception as exc:
                     self.core._set_job(running=False, stage='Error', error=str(exc))
                 finally:
-                    self.core._set_job(running=False)
-                    self.emit_job(job_id, dict(self.core.get_job()))
-                    if self.closed:
-                        for worker in (self.core.worker, self.core.qwen_worker, self.core.qc_worker): worker.kill()
-                        self.library_lock.close()
+                    with self.lock:
+                        self.core._set_job(running=False)
+                        if self.closed:
+                            for worker in (self.core.worker, self.core.qwen_worker, self.core.qc_worker): worker.kill()
+                            self.library_lock.close()
+                        self.operation_active = False
+                        self.emit_job(job_id, dict(self.core.get_job()))
 
             self.operation = threading.Thread(target=run, daemon=True)
             self.operation.start()
 
             def monitor():
                 previous = None
-                while self.operation and self.operation.is_alive() and self.job_id == job_id and not self.closed:
-                    snapshot = dict(self.core.get_job())
-                    if snapshot != previous:
-                        self.emit_job(job_id, snapshot)
-                        previous = snapshot
+                while not self.closed:
+                    with self.lock:
+                        if not self.operation_active or self.job_id != job_id: break
+                        snapshot = dict(self.core.get_job(), running=True)
+                        if snapshot != previous:
+                            self.emit_job(job_id, snapshot)
+                            previous = snapshot
                     time.sleep(.15)
             threading.Thread(target=monitor, daemon=True).start()
             return {'accepted': True, 'job_id': job_id}
@@ -97,8 +104,9 @@ class NarratorRuntime:
             result = self.core.get_bootstrap()
             result['version'] = '2.0.0-beta.1'
             result['library_root'] = str(self.paths.root)
-            result['job_id'] = self.job_id
-            result['job'] = self.core.get_job()
+            with self.lock:
+                result['job_id'] = self.job_id
+                result['job'] = dict(self.core.get_job(), running=self.operation_active)
             return result
         if command == 'history': return read_history(self.paths)
         if command == 'voices':
@@ -112,7 +120,7 @@ class NarratorRuntime:
             return {'ok': True}
         if command == 'configure':
             with self.lock:
-                if self.operation and self.operation.is_alive(): raise RuntimeError('operation-in-progress')
+                if self.operation_active: raise RuntimeError('operation-in-progress')
                 allowed = {'qwen_runtime_python', 'qwen_model_path', 'runtime_python', 'model_path', 'qc_runtime_python', 'qc_model_path'}
                 if any(key not in allowed or not isinstance(value, str) for key, value in payload.items()):
                     raise ValueError('invalid-configuration')

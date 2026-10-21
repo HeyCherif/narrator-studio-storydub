@@ -109,5 +109,23 @@ class BridgeTests(unittest.TestCase):
         self.runtime.core.worker.stop.assert_called_once()
         self.assertEqual(self.runtime.core.config['model_path'], self.tmp.name)
 
+    def test_finished_event_allows_immediate_next_generation(self):
+        import threading
+        finished = threading.Event()
+        errors = []
+        launched = []
+        self.runtime.core._warmup = lambda: self.runtime.core._set_job(ready=True)
+        self.runtime.core._generate_thread = lambda payload: self.runtime.core._set_job(running=False)
+        def receive(event):
+            if event['payload'].get('running') is False and not launched:
+                launched.append(True)
+                try: self.runtime.dispatch('generate', {'text': 'Second narration'})
+                except Exception as exc: errors.append(str(exc))
+                finished.set()
+        self.runtime.emit = receive
+        self.runtime.dispatch('generate', {'text': 'First narration'})
+        self.assertTrue(finished.wait(3))
+        self.assertEqual(errors, [])
+
 
 if __name__ == '__main__': unittest.main()
