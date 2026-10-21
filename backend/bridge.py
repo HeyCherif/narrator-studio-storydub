@@ -12,8 +12,20 @@ from .runtime import NarratorRuntime
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--library', required=True)
+    parser.add_argument('--library')
+    parser.add_argument('--probe-runtime', help='Verify an external Python ABI without loading an AI model')
     args = parser.parse_args()
+    if args.probe_runtime:
+        from .engine import external_worker_popen, WORKER_ROOT, hidden_popen_kwargs
+        import subprocess
+        process = external_worker_popen([args.probe_runtime, '-c',
+            'import json,socket,ctypes,wave,array,sys; print(json.dumps({"ok":True,"python":list(sys.version_info[:2])}))'],
+            cwd=WORKER_ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, **hidden_popen_kwargs())
+        out, error = process.communicate(timeout=30)
+        sys.stdout.write(out)
+        sys.stderr.write(error)
+        return process.returncode
+    if not args.library: parser.error('--library is required')
     output, lock = sys.stdout, threading.Lock()
     sys.stdout = sys.stderr
 
