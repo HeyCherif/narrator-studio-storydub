@@ -12,8 +12,8 @@ if __name__ == '__main__':
             '--workpath', str(ROOT / '.superpowers/pyinstaller'),
             '--specpath', str(ROOT / '.superpowers'), '--paths', str(ROOT),
             '--hidden-import', 'quality_utils', '--hidden-import', 'backend.engine']
-    for source, destination in [('backend/engine.py', 'backend'), ('tts_worker.py', '.'),
-                                ('qwen_tts_worker.py', '.'), ('qc_worker.py', '.'),
-                                ('quality_utils.py', '.')]:
+    for source, destination in [('backend/engine.py', 'backend'), ('tts_worker.py', 'workers'),
+                                ('qwen_tts_worker.py', 'workers'), ('qc_worker.py', 'workers'),
+                                ('quality_utils.py', 'workers')]:
         args += ['--add-data', f'{ROOT / source};{destination}']
     subprocess.run(args + [str(ROOT / 'scripts/bridge_entry.py')], cwd=ROOT, check=True)

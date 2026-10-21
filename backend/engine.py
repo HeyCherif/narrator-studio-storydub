@@ -36,14 +36,37 @@ CONFIG_PATH = ROOT / "config.json"
 HISTORY_DIR = ROOT / "history"
 HISTORY_DB = ROOT / "history.json"
 WEB_DIR = ROOT / "web"
-WORKER_SCRIPT = ROOT / "tts_worker.py"
-QWEN_WORKER_SCRIPT = ROOT / "qwen_tts_worker.py"
-QC_WORKER_SCRIPT = ROOT / "qc_worker.py"
+WORKER_ROOT = ROOT / "workers" if (ROOT / "workers").is_dir() else ROOT
+WORKER_SCRIPT = WORKER_ROOT / "tts_worker.py"
+QWEN_WORKER_SCRIPT = WORKER_ROOT / "qwen_tts_worker.py"
+QC_WORKER_SCRIPT = WORKER_ROOT / "qc_worker.py"
 QWEN_VOICES_DIR = ROOT / "qwen_voices"
 QWEN_MODEL_REPO = "Qwen/Qwen3-TTS-12Hz-0.6B-Base"
 QWEN_DEFAULT_MODEL_DIR = ROOT / "models" / "Qwen3-TTS-12Hz-0.6B-Base"
 WORK_DIR = HISTORY_DIR / ".work"
 
+
+
+_external_spawn_lock = threading.RLock()
+
+
+def _set_dll_directory(path):
+    import ctypes
+    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel32.SetDllDirectoryW.argtypes = [ctypes.c_wchar_p]
+    if not kernel32.SetDllDirectoryW(path):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def external_worker_popen(*args, **kwargs):
+    # Frozen bridge DLLs must never override the external AI interpreter's ABI.
+    with _external_spawn_lock:
+        frozen = os.name == 'nt' and bool(getattr(sys, 'frozen', False))
+        if frozen: _set_dll_directory(None)
+        try:
+            return subprocess.Popen(*args, **kwargs)
+        finally:
+            if frozen: _set_dll_directory(str(sys._MEIPASS))
 
 
 def read_json(path: Path, default: Any) -> Any:
@@ -619,7 +642,7 @@ class OmniWorker:
             env["PYTHONIOENCODING"] = "utf-8"
             env["HF_HUB_OFFLINE"] = "1"
             env["TRANSFORMERS_OFFLINE"] = "1"
-            self.proc = subprocess.Popen(
+            self.proc = external_worker_popen(
                 [str(python), "-u", str(WORKER_SCRIPT)],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -628,7 +651,7 @@ class OmniWorker:
                 encoding="utf-8",
                 errors="replace",
                 bufsize=1,
-                cwd=str(ROOT),
+                cwd=str(WORKER_ROOT),
                 env=env,
                 **hidden_popen_kwargs(),
             )
@@ -731,7 +754,7 @@ class QwenWorker:
             env["PYTHONIOENCODING"] = "utf-8"
             env["HF_HUB_OFFLINE"] = "1"
             env["TRANSFORMERS_OFFLINE"] = "1"
-            self.proc = subprocess.Popen(
+            self.proc = external_worker_popen(
                 [str(python), "-u", str(QWEN_WORKER_SCRIPT)],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -740,7 +763,7 @@ class QwenWorker:
                 encoding="utf-8",
                 errors="replace",
                 bufsize=1,
-                cwd=str(ROOT),
+                cwd=str(WORKER_ROOT),
                 env=env,
                 **hidden_popen_kwargs(),
             )
@@ -838,7 +861,7 @@ class QCWorker:
             env["PYTHONIOENCODING"] = "utf-8"
             env["HF_HUB_OFFLINE"] = "1"
             env["TRANSFORMERS_OFFLINE"] = "1"
-            self.proc = subprocess.Popen(
+            self.proc = external_worker_popen(
                 [str(python), "-u", str(QC_WORKER_SCRIPT)],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -847,7 +870,7 @@ class QCWorker:
                 encoding="utf-8",
                 errors="replace",
                 bufsize=1,
-                cwd=str(ROOT),
+                cwd=str(WORKER_ROOT),
                 env=env,
                 **hidden_popen_kwargs(),
             )
