@@ -1,1 +1,3 @@
-fn main() { narrator_studio::run(); }
+fn main() {
+    narrator_studio::run();
+}

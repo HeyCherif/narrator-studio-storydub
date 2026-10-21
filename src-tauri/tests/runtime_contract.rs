@@ -15,7 +15,13 @@ fn rejects_foreign_output_paths() {
     std::fs::create_dir(root.path().join("history")).unwrap();
     std::fs::write(root.path().join("history/test.wav"), b"RIFF").unwrap();
     assert!(resolve_audio(root.path(), "test.wav").is_ok());
-    for path in ["../test.wav", "..\\test.wav", "C:\\private.wav", "/private.wav", "missing.wav"] {
+    for path in [
+        "../test.wav",
+        "..\\test.wav",
+        "C:\\private.wav",
+        "/private.wav",
+        "missing.wav",
+    ] {
         assert!(resolve_audio(root.path(), path).is_err(), "{path}");
     }
 }
