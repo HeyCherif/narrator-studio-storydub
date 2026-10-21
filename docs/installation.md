@@ -26,6 +26,7 @@ python -m unittest discover -s tests -v
 npm test --prefix desktop
 npm run build --prefix desktop
 python scripts/build_bridge.py
+python scripts/collect_notices.py
 desktop/node_modules/.bin/tauri build --features desktop --bundles nsis
 ```
 

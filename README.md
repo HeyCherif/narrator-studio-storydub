@@ -1,6 +1,16 @@
 # Narrator Studio · StoryDub
 
-Application locale de narration longue avec génération TTS, contrôle qualité automatique et interface PyWebView.
+Application locale de narration longue avec génération TTS et contrôle qualité automatique. La version 2.0 bêta propose une interface Windows Tauri/Rust, avec Tabler sombre violet/cyan, en français et anglais. L’interface PyWebView historique est conservée comme solution de retour.
+
+## Version 2.0 bêta
+
+Studio, bibliothèque de voix, gestion des modèles et historique. Téléchargement Qwen officiel avec reprise et vérification ; réutilisation des moteurs Python, modèles et voix existants.
+
+- [Installation et reprise d’une bibliothèque](docs/installation.md)
+- [Notes de version et limites](docs/release.md)
+- [Vérifications effectuées](docs/verification-2.0-beta.1.md)
+
+Les environnements IA et modèles restent externes. Le paquet Windows ne contient aucune configuration, voix ni donnée personnelle. Fermer l’ancienne interface avant de réutiliser sa bibliothèque.
 
 ## Fonctionnalités
 
