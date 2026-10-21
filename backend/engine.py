@@ -1259,6 +1259,7 @@ class AppAPI:
             self.qc_worker.stop()
 
             icl = folder / "qwen_prompt.pt"
+            if self._cancelled(): raise RuntimeError("Génération annulée")
             xvec = folder / "qwen_xvector.pt"
             model = _detect_qwen_model(self.config)
             if not model:

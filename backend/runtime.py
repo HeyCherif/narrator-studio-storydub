@@ -29,6 +29,13 @@ class NarratorRuntime:
         engine.QWEN_VOICES_DIR = paths.voices
         engine.QWEN_DEFAULT_MODEL_DIR = paths.root / 'models/Qwen3-TTS-12Hz-0.6B-Base'
         self.core = engine.AppAPI(None, warmup=not lazy)
+        for worker in (self.core.worker, self.core.qwen_worker, self.core.qc_worker):
+            original_start = worker.start
+            def guarded_start(worker=worker, original_start=original_start):
+                with worker.lock:
+                    if self.closed or self.core._cancelled(): raise RuntimeError('operation-cancelled')
+                    return original_start()
+            worker.start = guarded_start
 
     def emit_job(self, job_id, payload):
         if job_id == self.job_id and not self.closed:
@@ -65,6 +72,9 @@ class NarratorRuntime:
                 finally:
                     self.core._set_job(running=False)
                     self.emit_job(job_id, dict(self.core.get_job()))
+                    if self.closed:
+                        for worker in (self.core.worker, self.core.qwen_worker, self.core.qc_worker): worker.kill()
+                        self.library_lock.close()
 
             self.operation = threading.Thread(target=run, daemon=True)
             self.operation.start()
@@ -101,12 +111,19 @@ class NarratorRuntime:
             for worker in (self.core.worker, self.core.qwen_worker, self.core.qc_worker): worker.kill()
             return {'ok': True}
         if command == 'configure':
-            if self.operation and self.operation.is_alive(): raise RuntimeError('operation-in-progress')
-            allowed = {'qwen_runtime_python', 'qwen_model_path', 'runtime_python', 'model_path', 'qc_runtime_python', 'qc_model_path'}
-            updates = {key: value for key, value in payload.items() if key in allowed and isinstance(value, str)}
-            self.core.config.update(updates)
-            self.core._persist_config()
-            return {'ok': True}
+            with self.lock:
+                if self.operation and self.operation.is_alive(): raise RuntimeError('operation-in-progress')
+                allowed = {'qwen_runtime_python', 'qwen_model_path', 'runtime_python', 'model_path', 'qc_runtime_python', 'qc_model_path'}
+                if any(key not in allowed or not isinstance(value, str) for key, value in payload.items()):
+                    raise ValueError('invalid-configuration')
+                for key, value in payload.items():
+                    path = Path(value)
+                    if not (path.is_file() if key.endswith('python') else path.is_dir()):
+                        raise ValueError('configuration-path-missing: ' + key)
+                for worker in (self.core.worker, self.core.qwen_worker, self.core.qc_worker): worker.stop()
+                self.core.config.update(payload)
+                self.core._persist_config()
+                return {'ok': True}
         if command == 'shutdown':
             self.shutdown()
             return {'ok': True}
@@ -118,4 +135,5 @@ class NarratorRuntime:
         self.core._set_job(cancel_requested=True)
         for worker in (self.core.worker, self.core.qwen_worker, self.core.qc_worker): worker.kill()
         if self.operation and self.operation is not threading.current_thread(): self.operation.join(timeout_seconds)
-        self.library_lock.close()
+        for worker in (self.core.worker, self.core.qwen_worker, self.core.qc_worker): worker.kill()
+        if not self.operation or not self.operation.is_alive(): self.library_lock.close()

@@ -79,5 +79,35 @@ class BridgeTests(unittest.TestCase):
         finally:
             waiting.set()
 
+    def test_shutdown_prevents_late_worker_start_and_retains_library_lock(self):
+        import threading
+        from backend.library import LibraryLock
+        entered, release = threading.Event(), threading.Event()
+        def blocked_clone(payload):
+            entered.set()
+            release.wait(3)
+            self.runtime.core.qwen_worker.start()
+        self.runtime.core.qwen_clone = blocked_clone
+        self.runtime.dispatch('clone_voice', {})
+        self.assertTrue(entered.wait(2))
+        self.runtime.shutdown(timeout_seconds=0)
+        try:
+            with self.assertRaisesRegex(RuntimeError, 'library-in-use'):
+                LibraryLock(Path(self.tmp.name))
+        finally:
+            release.set()
+            self.runtime.operation.join(3)
+        self.assertIsNone(self.runtime.core.qwen_worker.proc)
+        lock = LibraryLock(Path(self.tmp.name))
+        lock.close()
+
+    def test_configure_stops_resident_workers_before_changing_paths(self):
+        from unittest.mock import Mock
+        for worker in (self.runtime.core.worker, self.runtime.core.qwen_worker, self.runtime.core.qc_worker):
+            worker.stop = Mock()
+        self.runtime.dispatch('configure', {'model_path': self.tmp.name})
+        self.runtime.core.worker.stop.assert_called_once()
+        self.assertEqual(self.runtime.core.config['model_path'], self.tmp.name)
+
 
 if __name__ == '__main__': unittest.main()

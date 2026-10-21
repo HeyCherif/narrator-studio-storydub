@@ -32,7 +32,7 @@ fn manager(app:&tauri::AppHandle,root:PathBuf,settings:&Path)->Arc<DownloadManag
  *state.root.lock().unwrap()=root.clone();*state.downloads.lock().unwrap()=manager(&app,root,&state.settings);Ok(true)
 }
 #[tauri::command]fn download_snapshot(state:State<'_,DesktopState>)->Vec<DownloadSnapshot>{state.downloads.lock().unwrap().snapshot()}
-#[tauri::command]fn download_action(state:State<'_,DesktopState>,action:String,id:Option<String>)->Result<(),String>{state.downloads.lock().unwrap().action(&action,id.as_deref())}
+#[tauri::command]async fn download_action(state:State<'_,DesktopState>,action:String,id:Option<String>)->Result<(),String>{state.downloads.lock().unwrap().action(&action,id.as_deref())}
 pub fn run(){
  let app=tauri::Builder::default().plugin(tauri_plugin_single_instance::init(|app,_,_|{if let Some(window)=app.get_webview_window("main"){let _=window.show();let _=window.set_focus();}})).plugin(tauri_plugin_dialog::init()).plugin(tauri_plugin_opener::init())
  .setup(|app|{let data=app.path().app_data_dir()?;std::fs::create_dir_all(&data)?;let settings=data.join("settings.json");let saved:Value=std::fs::read(&settings).ok().and_then(|b|serde_json::from_slice(&b).ok()).unwrap_or_default();let root=std::env::var_os("NARRATOR_LIBRARY").map(PathBuf::from).or_else(||saved["library_root"].as_str().map(PathBuf::from)).unwrap_or_else(||data.join("library"));std::fs::create_dir_all(&root)?;let downloads=manager(app.handle(),root.clone(),&settings);app.manage(DesktopState{root:Mutex::new(root),settings,bridge:tokio::sync::Mutex::new(None),downloads:Mutex::new(downloads)});Ok(())})

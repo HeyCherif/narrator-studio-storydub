@@ -13,7 +13,8 @@ pub async fn transfer_file(client:&reqwest::Client,url:&str,root:&Path,spec:&Mod
  let previous:serde_json::Value=std::fs::read(&metadata).ok().and_then(|b|serde_json::from_slice(&b).ok()).unwrap_or_default();
  let mut offset=if previous["revision"]==revision{std::fs::metadata(&part).map(|m|m.len()).unwrap_or(0)}else{0};
  if offset>spec.bytes.unwrap_or(u64::MAX){offset=0;}
- if let Some(total)=spec.bytes{if fs2::available_space(root).map_err(|e|e.to_string())?<total.saturating_sub(offset)+16*1024*1024{return Err("insufficient-disk-space".into());}}
+ if spec.bytes==Some(offset)&&offset>0{if verify_file(&part,spec).is_ok(){tokio::fs::rename(&part,&target).await.map_err(|e|e.to_string())?;let _=tokio::fs::remove_file(&metadata).await;progress(offset);return Ok(());}offset=0;}
+ if let Some(total)=spec.bytes{if fs2::available_space(root).map_err(|e|e.to_string())?<total.saturating_sub(offset).saturating_add(16*1024*1024){return Err("insufficient-disk-space".into());}}
  atomic_json(&metadata,&serde_json::json!({"revision":revision}))?;
  let mut request=client.get(url);if offset>0{request=request.header(reqwest::header::RANGE,format!("bytes={offset}-"));}
  let response=tokio::select!{result=request.send()=>result.map_err(|e|e.to_string())?,_=async{loop{if control.status().is_err(){break;}tokio::time::sleep(std::time::Duration::from_millis(100)).await;}}=>return control.status()};
