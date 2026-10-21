@@ -69,6 +69,24 @@ def external_worker_popen(*args, **kwargs):
             if frozen: _set_dll_directory(str(sys._MEIPASS))
 
 
+def terminate_owned_process(process):
+    """Stop only this worker's process tree, including Windows venv launchers."""
+    if not process or process.poll() is not None: return
+    try:
+        if os.name == 'nt':
+            taskkill = Path(os.environ.get('SystemRoot', r'C:\Windows')) / 'System32/taskkill.exe'
+            killer = external_worker_popen([str(taskkill), '/PID', str(process.pid), '/T', '/F'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **hidden_popen_kwargs())
+            killer.wait(timeout=5)
+        else:
+            process.terminate()
+        process.wait(timeout=2)
+    except Exception:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=2)
+
+
 def read_json(path: Path, default: Any) -> Any:
     try:
         return json.loads(path.read_text(encoding="utf-8-sig"))
@@ -669,24 +687,13 @@ class OmniWorker:
                 p.stdin.flush()
                 p.wait(timeout=2)
         except Exception:
-            try:
-                p.terminate()
-            except Exception:
-                pass
+            terminate_owned_process(p)
 
     def kill(self):
         with self.lock:
             p = self.proc
             self.proc = None
-        if p and p.poll() is None:
-            try:
-                p.terminate()
-                p.wait(timeout=2)
-            except Exception:
-                try:
-                    p.kill()
-                except Exception:
-                    pass
+        terminate_owned_process(p)
 
     def request(self, payload: dict[str, Any]) -> dict[str, Any]:
         with self.reader_lock:
@@ -781,24 +788,13 @@ class QwenWorker:
                 p.stdin.flush()
                 p.wait(timeout=3)
         except Exception:
-            try:
-                p.terminate()
-            except Exception:
-                pass
+            terminate_owned_process(p)
 
     def kill(self):
         with self.lock:
             p = self.proc
             self.proc = None
-        if p and p.poll() is None:
-            try:
-                p.terminate()
-                p.wait(timeout=2)
-            except Exception:
-                try:
-                    p.kill()
-                except Exception:
-                    pass
+        terminate_owned_process(p)
 
     def request(self, payload: dict[str, Any]) -> dict[str, Any]:
         with self.reader_lock:
@@ -888,24 +884,13 @@ class QCWorker:
                 p.stdin.flush()
                 p.wait(timeout=3)
         except Exception:
-            try:
-                p.terminate()
-            except Exception:
-                pass
+            terminate_owned_process(p)
 
     def kill(self):
         with self.lock:
             p = self.proc
             self.proc = None
-        if p and p.poll() is None:
-            try:
-                p.terminate()
-                p.wait(timeout=2)
-            except Exception:
-                try:
-                    p.kill()
-                except Exception:
-                    pass
+        terminate_owned_process(p)
 
     def request(self, payload: dict[str, Any]) -> dict[str, Any]:
         with self.reader_lock:
