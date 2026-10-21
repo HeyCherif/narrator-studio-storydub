@@ -1,15 +1,49 @@
-import '@tabler/core/dist/css/tabler.min.css';
-import '@tabler/icons-webfont/dist/tabler-icons.min.css';
-import './styles/app.css';
-import {createClient} from './api';
-import {getLocale,setLocale,t} from './i18n';
-import {icon} from './components/ui';
-import {mountStudio} from './screens/studio';
-import {mountVoices} from './screens/voices';
-import {mountModels} from './screens/models';
-import {mountHistory} from './screens/history';
-const logo=`<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="1" y="1" width="46" height="46" rx="14" fill="#191c31" stroke="#393257"/><path d="M12 31V17l8 14V17m8 14V17l8 14V17" stroke="#a899ff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 24h8" stroke="#61d9de" stroke-width="3.5" stroke-linecap="round"/></svg>`;
-const client=await createClient();let current='studio',cleanup=()=>{};
-function shell(){cleanup();document.documentElement.dataset.bsTheme='dark';document.documentElement.lang=getLocale();document.querySelector('#app')!.innerHTML=`<aside class="sidebar"><a class="brand" href="#studio" aria-label="Narrator Studio">${logo}<span>Narrator<strong>STUDIO</strong></span></a><span class="nav-label">WORKSPACE</span><nav aria-label="Navigation">${(['studio','voices','models','history'] as const).map((key,i)=>`<a href="#${key}" data-page="${key}">${icon(['layout-dashboard','microphone','stack-2','history'][i])}<span>${t(key)}</span>${key==='studio'?'<span class="nav-dot"></span>':''}</a>`).join('')}</nav><div class="sidebar-bottom"><div class="local-status"><span class="status-orb"></span>${client.preview?'WEB PREVIEW':'LOCAL WORKSPACE'}</div><label class="locale-label" for="locale">${icon('language')} FR / EN</label><select id="locale" aria-label="${t('appearance')}"><option value="fr">Français</option><option value="en">English</option></select><small>NARRATOR STUDIO · 2.0 BETA</small></div></aside><div class="workspace"><header class="topbar"><span>${t('tagline')}</span><span class="private-chip">${icon('shield-lock')} LOCAL FIRST</span></header>${client.preview?`<div class="preview-banner">${icon('info-circle')}${t('preview')}</div>`:''}<main id="content"></main><footer>CRAFTED FOR YOUR NEXT STORY <span>STORYDUB / NARRATOR</span></footer></div>`;const select=document.querySelector<HTMLSelectElement>('#locale')!;select.value=getLocale();select.onchange=()=>{setLocale(select.value as 'fr'|'en');shell();};navigate();}
-function navigate(){const requested=location.hash.slice(1);current=['studio','voices','models','history'].includes(requested)?requested:'studio';cleanup();document.querySelectorAll<HTMLElement>('[data-page]').forEach(a=>{a.classList.toggle('active',a.dataset.page===current);if(a.dataset.page===current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});const mount={studio:mountStudio,voices:mountVoices,models:mountModels,history:mountHistory}[current]!;cleanup=mount(document.querySelector('#content')!,client);}
-window.addEventListener('hashchange',navigate);shell();
+import "@tabler/core/dist/css/tabler.min.css";
+import "@tabler/icons-webfont/dist/tabler-icons.min.css";
+import "./styles/app.css";
+import { createClient } from "./api";
+import { getLocale, setLocale, t } from "./i18n";
+import { icon } from "./components/ui";
+import { mountStudio } from "./screens/studio";
+import { mountVoices } from "./screens/voices";
+import { mountModels } from "./screens/models";
+import { mountHistory } from "./screens/history";
+const logo = `<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="1" y="1" width="46" height="46" rx="14" fill="#191c31" stroke="#393257"/><path d="M12 31V17l8 14V17m8 14V17l8 14V17" stroke="#a899ff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 24h8" stroke="#61d9de" stroke-width="3.5" stroke-linecap="round"/></svg>`;
+const client = await createClient();
+let current = "studio",
+  cleanup = () => {};
+function shell() {
+  cleanup();
+  document.documentElement.dataset.bsTheme = "dark";
+  document.documentElement.lang = getLocale();
+  document.querySelector("#app")!.innerHTML =
+    `<aside class="sidebar"><a class="brand" href="#studio" aria-label="Narrator Studio">${logo}<span>Narrator<strong>STUDIO</strong></span></a><span class="nav-label">WORKSPACE</span><nav aria-label="Navigation">${(["studio", "voices", "models", "history"] as const).map((key, i) => `<a href="#${key}" data-page="${key}">${icon(["layout-dashboard", "microphone", "stack-2", "history"][i])}<span>${t(key)}</span>${key === "studio" ? '<span class="nav-dot"></span>' : ""}</a>`).join("")}</nav><div class="sidebar-bottom"><div class="local-status"><span class="status-orb"></span>${client.preview ? "WEB PREVIEW" : "LOCAL WORKSPACE"}</div><label class="locale-label" for="locale">${icon("language")} FR / EN</label><select id="locale" aria-label="${t("appearance")}"><option value="fr">Français</option><option value="en">English</option></select><small>NARRATOR STUDIO · 2.0 BETA</small></div></aside><div class="workspace"><header class="topbar"><span>${t("tagline")}</span><span class="private-chip">${icon("shield-lock")} LOCAL FIRST</span></header>${client.preview ? `<div class="preview-banner">${icon("info-circle")}${t("preview")}</div>` : ""}<main id="content"></main><footer>CRAFTED FOR YOUR NEXT STORY <span>STORYDUB / NARRATOR</span></footer></div>`;
+  const select = document.querySelector<HTMLSelectElement>("#locale")!;
+  select.value = getLocale();
+  select.onchange = () => {
+    setLocale(select.value as "fr" | "en");
+    shell();
+  };
+  navigate();
+}
+function navigate() {
+  const requested = location.hash.slice(1);
+  current = ["studio", "voices", "models", "history"].includes(requested)
+    ? requested
+    : "studio";
+  cleanup();
+  document.querySelectorAll<HTMLElement>("[data-page]").forEach((a) => {
+    a.classList.toggle("active", a.dataset.page === current);
+    if (a.dataset.page === current) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  });
+  const mount = {
+    studio: mountStudio,
+    voices: mountVoices,
+    models: mountModels,
+    history: mountHistory,
+  }[current]!;
+  cleanup = mount(document.querySelector("#content")!, client);
+}
+window.addEventListener("hashchange", navigate);
+shell();

@@ -1,19 +1,140 @@
-import type {NarratorClient,DownloadSnapshot} from '../types';
-import {t} from '../i18n';
-import {escape,icon,title,showError} from '../components/ui';
-const bytes=(n:number)=>n>=1073741824?(n/1073741824).toFixed(2)+' GB':(n/1048576).toFixed(1)+' MB';
-export function mountModels(container:HTMLElement,client:NarratorClient){
- let alive=true;
- container.innerHTML=title('NARRATOR / MODELS',t('modelTitle'),t('modelHint'))+`<section class="reuse-banner card"><div class="history-icon">${icon('folder-symlink')}</div><div><h3>${t('reuse')}</h3><p>${t('reuseHint')}</p></div><button class="btn btn-outline-secondary" data-adopt>${t('choose')}${icon('arrow-up-right')}</button></section><div class="model-grid">${['OmniVoice HQ','Qwen3-TTS · 0.6B','Whisper · QC'].map((name,i)=>`<article class="model-card card"><div class="model-top"><span class="model-symbol">${icon(['wave-sine','hexagon-letter-q','ear'][i])}</span><span class="mini-badge" data-status="${i}">${t('missing')}</span></div><h3>${name}</h3><p>${i===1?t('official'):t('reuse')}</p><small data-integrity="${i}"></small>${i===1?`<button class="btn btn-primary" data-download>${icon('download')}${t('download')}</button>`:''}</article>`).join('')}</div><div data-transfers></div><p class="muted">${t('modelWarn')}</p><details class="card advanced"><summary>${icon('adjustments-horizontal')}${t('details')}</summary><form><div class="form-row">${[['runtime_python','OmniVoice · '+t('runtime')],['model_path','OmniVoice · '+t('model')],['qwen_runtime_python','Qwen · '+t('runtime')],['qwen_model_path','Qwen · '+t('model')],['qc_runtime_python','Whisper · '+t('runtime')],['qc_model_path','Whisper · '+t('model')]].map(([key,label])=>`<label>${label}<div class="path-input"><input class="form-control" name="${key}" readonly><button class="btn btn-outline-secondary" type="button" data-path="${key}" aria-label="${t('choose')} ${label}">${icon('folder')}</button></div></label>`).join('')}</div><button class="btn btn-primary" type="submit">${t('save')}</button></form></details><p data-error role="status"></p>`;
- const error=container.querySelector<HTMLElement>('[data-error]')!;
- const act=async(action:string,id?:string)=>{try{await client.downloadAction(action,id);}catch(e){if(alive)showError(error,e);}};
- function transfers(values:DownloadSnapshot[]){if(!alive)return;const target=container.querySelector<HTMLElement>('[data-transfers]')!;target.innerHTML=values.map(v=>{const percent=v.total_bytes?Math.min(100,v.bytes_done/v.total_bytes*100):null;const state=['queued','downloading','verifying','paused','cancelled','error','ready'].includes(v.state)?t(v.state==='ready'?'complete':v.state as 'queued'):v.state;return `<section class="card transfer"><div class="panel-heading">${icon('download')}<strong>Qwen3-TTS</strong><span class="mini-badge">${escape(state)}</span></div><div class="progress-track ${percent===null?'indeterminate':''}"><div style="width:${percent??0}%"></div></div><p>${bytes(v.bytes_done)}${v.total_bytes?' / '+bytes(v.total_bytes):''}${v.speed_bps?' · '+bytes(v.speed_bps)+'/s':''}${v.eta_seconds?' · '+Math.ceil(v.eta_seconds/60)+' min':''}</p><p class="error">${escape(v.error||'')}</p><div class="transfer-actions">${v.state==='downloading'||v.state==='preparing'?`<button class="btn btn-outline-secondary" data-action="pause" data-id="${escape(v.id)}">${t('pause')}</button>`:v.state==='paused'?`<button class="btn btn-primary" data-action="resume" data-id="${escape(v.id)}">${t('resume')}</button>`:v.state==='error'||v.state==='cancelled'?`<button class="btn btn-primary" data-action="retry" data-id="${escape(v.id)}">${t('retry')}</button>`:''}${!['ready','cancelled'].includes(v.state)?`<button class="btn btn-outline-secondary" data-action="cancel" data-id="${escape(v.id)}">${t('cancel')}</button>`:''}</div></section>`;}).join('');target.querySelectorAll<HTMLButtonElement>('[data-action]').forEach(b=>b.onclick=()=>{void act(b.dataset.action!,b.dataset.id);});}
- const unsub=client.subscribeDownloads(transfers);void client.downloads().then(transfers).catch(e=>{if(alive)showError(error,e);});
- void client.bootstrap().then(data=>{if(!alive)return;const flags=[data.runtime.model_exists,data.runtime.qwen_model_exists,data.runtime.qc_model_exists];container.querySelectorAll<HTMLInputElement>('[name]').forEach(input=>{input.value=String(data.runtime[input.name]||'');});flags.forEach((flag,i)=>{container.querySelector(`[data-status="${i}"]`)!.textContent=t(flag?'installed':'missing');container.querySelector(`[data-integrity="${i}"]`)!.textContent=flag?t('notVerified'):'';});}).catch(e=>{if(alive)showError(error,e);});
- container.querySelector<HTMLButtonElement>('[data-download]')!.onclick=()=>{void act('enqueue');};
- container.querySelector<HTMLButtonElement>('[data-adopt]')!.onclick=async()=>{try{if(await client.adoptLegacyLibrary()&&alive)location.reload();}catch(e){if(alive)showError(error,e);}};
- container.querySelectorAll<HTMLButtonElement>('[data-path]').forEach(b=>b.onclick=async()=>{try{const path=await client.choosePath(b.dataset.path!);if(path&&alive)container.querySelector<HTMLInputElement>(`[name="${b.dataset.path}"]`)!.value=path;}catch(e){if(alive)showError(error,e);}});
- container.querySelector('form')!.onsubmit=async e=>{e.preventDefault();const values:Record<string,string>={};container.querySelectorAll<HTMLInputElement>('[name]').forEach(input=>{if(input.value)values[input.name]=input.value;});try{await client.configure(values);if(alive)error.textContent=t('saved');}catch(err){if(alive)showError(error,err);}};
- return()=>{alive=false;unsub();};
+import type { NarratorClient, DownloadSnapshot } from "../types";
+import { t } from "../i18n";
+import { escape, icon, title, showError } from "../components/ui";
+const bytes = (n: number) =>
+  n >= 1073741824
+    ? (n / 1073741824).toFixed(2) + " GB"
+    : (n / 1048576).toFixed(1) + " MB";
+export function mountModels(container: HTMLElement, client: NarratorClient) {
+  let alive = true;
+  container.innerHTML =
+    title("NARRATOR / MODELS", t("modelTitle"), t("modelHint")) +
+    `<section class="reuse-banner card"><div class="history-icon">${icon("folder-symlink")}</div><div><h3>${t("reuse")}</h3><p>${t("reuseHint")}</p></div><button class="btn btn-outline-secondary" data-adopt>${t("choose")}${icon("arrow-up-right")}</button></section><div class="model-grid">${["OmniVoice HQ", "Qwen3-TTS · 0.6B", "Whisper · QC"].map((name, i) => `<article class="model-card card"><div class="model-top"><span class="model-symbol">${icon(["wave-sine", "hexagon-letter-q", "ear"][i])}</span><span class="mini-badge" data-status="${i}">${t("missing")}</span></div><h3>${name}</h3><p>${i === 1 ? t("official") : t("reuse")}</p><small data-integrity="${i}"></small>${i === 1 ? `<button class="btn btn-primary" data-download>${icon("download")}${t("download")}</button>` : ""}</article>`).join("")}</div><div data-transfers></div><p class="muted">${t("modelWarn")}</p><details class="card advanced"><summary>${icon("adjustments-horizontal")}${t("details")}</summary><form><div class="form-row">${[
+      ["runtime_python", "OmniVoice · " + t("runtime")],
+      ["model_path", "OmniVoice · " + t("model")],
+      ["qwen_runtime_python", "Qwen · " + t("runtime")],
+      ["qwen_model_path", "Qwen · " + t("model")],
+      ["qc_runtime_python", "Whisper · " + t("runtime")],
+      ["qc_model_path", "Whisper · " + t("model")],
+    ]
+      .map(
+        ([key, label]) =>
+          `<label>${label}<div class="path-input"><input class="form-control" name="${key}" readonly><button class="btn btn-outline-secondary" type="button" data-path="${key}" aria-label="${t("choose")} ${label}">${icon("folder")}</button></div></label>`,
+      )
+      .join(
+        "",
+      )}</div><button class="btn btn-primary" type="submit">${t("save")}</button></form></details><p data-error role="status"></p>`;
+  const error = container.querySelector<HTMLElement>("[data-error]")!;
+  const act = async (action: string, id?: string) => {
+    try {
+      await client.downloadAction(action, id);
+    } catch (e) {
+      if (alive) showError(error, e);
+    }
+  };
+  function transfers(values: DownloadSnapshot[]) {
+    if (!alive) return;
+    const target = container.querySelector<HTMLElement>("[data-transfers]")!;
+    target.innerHTML = values
+      .map((v) => {
+        const percent = v.total_bytes
+          ? Math.min(100, (v.bytes_done / v.total_bytes) * 100)
+          : null;
+        const state = [
+          "queued",
+          "downloading",
+          "verifying",
+          "paused",
+          "cancelled",
+          "error",
+          "ready",
+        ].includes(v.state)
+          ? t(v.state === "ready" ? "complete" : (v.state as "queued"))
+          : v.state;
+        return `<section class="card transfer"><div class="panel-heading">${icon("download")}<strong>Qwen3-TTS</strong><span class="mini-badge">${escape(state)}</span></div><div class="progress-track ${percent === null ? "indeterminate" : ""}"><div style="width:${percent ?? 0}%"></div></div><p>${bytes(v.bytes_done)}${v.total_bytes ? " / " + bytes(v.total_bytes) : ""}${v.speed_bps ? " · " + bytes(v.speed_bps) + "/s" : ""}${v.eta_seconds ? " · " + Math.ceil(v.eta_seconds / 60) + " min" : ""}</p><p class="error">${escape(v.error || "")}</p><div class="transfer-actions">${v.state === "downloading" || v.state === "preparing" ? `<button class="btn btn-outline-secondary" data-action="pause" data-id="${escape(v.id)}">${t("pause")}</button>` : v.state === "paused" ? `<button class="btn btn-primary" data-action="resume" data-id="${escape(v.id)}">${t("resume")}</button>` : v.state === "error" || v.state === "cancelled" ? `<button class="btn btn-primary" data-action="retry" data-id="${escape(v.id)}">${t("retry")}</button>` : ""}${!["ready", "cancelled"].includes(v.state) ? `<button class="btn btn-outline-secondary" data-action="cancel" data-id="${escape(v.id)}">${t("cancel")}</button>` : ""}</div></section>`;
+      })
+      .join("");
+    target.querySelectorAll<HTMLButtonElement>("[data-action]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          void act(b.dataset.action!, b.dataset.id);
+        }),
+    );
+  }
+  const unsub = client.subscribeDownloads(transfers);
+  void client
+    .downloads()
+    .then(transfers)
+    .catch((e) => {
+      if (alive) showError(error, e);
+    });
+  void client
+    .bootstrap()
+    .then((data) => {
+      if (!alive) return;
+      const flags = [
+        data.runtime.model_exists,
+        data.runtime.qwen_model_exists,
+        data.runtime.qc_model_exists,
+      ];
+      container
+        .querySelectorAll<HTMLInputElement>("[name]")
+        .forEach((input) => {
+          input.value = String(data.runtime[input.name] || "");
+        });
+      flags.forEach((flag, i) => {
+        container.querySelector(`[data-status="${i}"]`)!.textContent = t(
+          flag ? "installed" : "missing",
+        );
+        container.querySelector(`[data-integrity="${i}"]`)!.textContent = flag
+          ? t("notVerified")
+          : "";
+      });
+    })
+    .catch((e) => {
+      if (alive) showError(error, e);
+    });
+  container.querySelector<HTMLButtonElement>("[data-download]")!.onclick =
+    () => {
+      void act("enqueue");
+    };
+  container.querySelector<HTMLButtonElement>("[data-adopt]")!.onclick =
+    async () => {
+      try {
+        if ((await client.adoptLegacyLibrary()) && alive) location.reload();
+      } catch (e) {
+        if (alive) showError(error, e);
+      }
+    };
+  container.querySelectorAll<HTMLButtonElement>("[data-path]").forEach(
+    (b) =>
+      (b.onclick = async () => {
+        try {
+          const path = await client.choosePath(b.dataset.path!);
+          if (path && alive)
+            container.querySelector<HTMLInputElement>(
+              `[name="${b.dataset.path}"]`,
+            )!.value = path;
+        } catch (e) {
+          if (alive) showError(error, e);
+        }
+      }),
+  );
+  container.querySelector("form")!.onsubmit = async (e) => {
+    e.preventDefault();
+    const values: Record<string, string> = {};
+    container.querySelectorAll<HTMLInputElement>("[name]").forEach((input) => {
+      if (input.value) values[input.name] = input.value;
+    });
+    try {
+      await client.configure(values);
+      if (alive) error.textContent = t("saved");
+    } catch (err) {
+      if (alive) showError(error, err);
+    }
+  };
+  return () => {
+    alive = false;
+    unsub();
+  };
 }
-

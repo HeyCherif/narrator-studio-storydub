@@ -1,11 +1,41 @@
 {
- "$schema":"https://schema.tauri.app/config/2",
- "productName":"Narrator Studio",
- "version":"2.0.0-beta.1",
- "identifier":"com.heycherif.narratorstudio",
- "build":{"frontendDist":"../desktop/dist","devUrl":"http://127.0.0.1:1420"},
- "app":{"windows":[{"label":"main","title":"Narrator Studio","width":1280,"height":850,"minWidth":780,"minHeight":600,"backgroundColor":"#10121f"}],"security":{"csp":"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' asset: http://asset.localhost data:; media-src 'self' asset: http://asset.localhost; connect-src ipc: http://ipc.localhost","assetProtocol":{"enable":true,"scope":[]}}},
- "bundle":{"active":true,"targets":["nsis"],"externalBin":["binaries/narrator-bridge"],"icon":["icons/icon.ico"],"shortDescription":"Local narration studio","category":"Music","windows":{"nsis":{"displayLanguageSelector":true,"languages":["English","French"]}}}
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Narrator Studio",
+  "version": "2.0.0-beta.1",
+  "identifier": "com.heycherif.narratorstudio",
+  "build": {
+    "frontendDist": "../desktop/dist",
+    "devUrl": "http://127.0.0.1:1420"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Narrator Studio",
+        "width": 1280,
+        "height": 850,
+        "minWidth": 780,
+        "minHeight": 600,
+        "backgroundColor": "#10121f"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' asset: http://asset.localhost data:; media-src 'self' asset: http://asset.localhost; connect-src ipc: http://ipc.localhost",
+      "assetProtocol": { "enable": true, "scope": [] }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "externalBin": ["binaries/narrator-bridge"],
+    "icon": ["icons/icon.ico"],
+    "shortDescription": "Local narration studio",
+    "category": "Music",
+    "windows": {
+      "nsis": {
+        "displayLanguageSelector": true,
+        "languages": ["English", "French"]
+      }
+    }
+  }
 }
-
-

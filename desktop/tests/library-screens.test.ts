@@ -1,14 +1,85 @@
-import {beforeEach,expect,test} from 'vitest';
-import {mountHistory} from '../src/screens/history';
-import {mountModels} from '../src/screens/models';
-import {mountVoices} from '../src/screens/voices';
-import {setLocale,t} from '../src/i18n';
-import type {NarratorClient} from '../src/types';
-beforeEach(()=>{document.body.innerHTML='<main></main>';setLocale('fr');});
-const tick=()=>new Promise(r=>setTimeout(r,0));
-test('missing audio remains visible and cannot be exported',async()=>{mountHistory(document.querySelector('main')!,{history:async()=>[{filename:'lost.wav',text:'Preserved story',available:false}]} as unknown as NarratorClient);await tick();expect(document.body.textContent).toContain('Preserved story');expect(document.body.textContent).toContain('Fichier absent');expect(document.querySelector('[data-export]')).toBeNull();});
-test('untrusted history is rendered as text',async()=>{mountHistory(document.querySelector('main')!,{history:async()=>[{filename:'x.wav',text:'<img src=x onerror=alert(1)>',available:false}]} as unknown as NarratorClient);await tick();expect(document.querySelector('img')).toBeNull();expect(document.body.textContent).toContain('<img');});
-test('unknown transfer length shows bytes without a fabricated percentage',async()=>{mountModels(document.querySelector('main')!,{downloads:async()=>[{id:'1',state:'downloading',bytes_done:1048576,total_bytes:null,speed_bps:null,eta_seconds:null}],subscribeDownloads:()=>()=>{},bootstrap:async()=>({runtime:{}})} as unknown as NarratorClient);await tick();expect(document.querySelector('.indeterminate')).not.toBeNull();expect(document.querySelector('[data-transfers]')!.textContent).toContain('1.0 MB');expect(document.querySelector('[data-transfers]')!.textContent).not.toContain('%');});
-test('empty voice library is explained',async()=>{mountVoices(document.querySelector('main')!,{voices:async()=>({omnivoice:[],qwen:[]}),subscribeRuntime:()=>()=>{}} as unknown as NarratorClient);await tick();expect(document.body.textContent).toContain(t('noVoices'));});
-test('language switches headings and persists preference',()=>{setLocale('en');expect(t('history')).toBe('History');expect(localStorage.getItem('narrator.locale')).toBe('en');setLocale('fr');expect(t('history')).toBe('Historique');});
-test('advanced setup exposes Whisper paths required for voice cloning',async()=>{mountModels(document.querySelector('main')!,{downloads:async()=>[],subscribeDownloads:()=>()=>{},bootstrap:async()=>({runtime:{}})} as unknown as NarratorClient);await tick();expect(document.querySelector('[name=qc_runtime_python]')).not.toBeNull();expect(document.querySelector('[name=qc_model_path]')).not.toBeNull();});
+import { beforeEach, expect, test } from "vitest";
+import { mountHistory } from "../src/screens/history";
+import { mountModels } from "../src/screens/models";
+import { mountVoices } from "../src/screens/voices";
+import { setLocale, t } from "../src/i18n";
+import type { NarratorClient } from "../src/types";
+beforeEach(() => {
+  document.body.innerHTML = "<main></main>";
+  setLocale("fr");
+});
+const tick = () => new Promise((r) => setTimeout(r, 0));
+test("missing audio remains visible and cannot be exported", async () => {
+  mountHistory(document.querySelector("main")!, {
+    history: async () => [
+      { filename: "lost.wav", text: "Preserved story", available: false },
+    ],
+  } as unknown as NarratorClient);
+  await tick();
+  expect(document.body.textContent).toContain("Preserved story");
+  expect(document.body.textContent).toContain("Fichier absent");
+  expect(document.querySelector("[data-export]")).toBeNull();
+});
+test("untrusted history is rendered as text", async () => {
+  mountHistory(document.querySelector("main")!, {
+    history: async () => [
+      {
+        filename: "x.wav",
+        text: "<img src=x onerror=alert(1)>",
+        available: false,
+      },
+    ],
+  } as unknown as NarratorClient);
+  await tick();
+  expect(document.querySelector("img")).toBeNull();
+  expect(document.body.textContent).toContain("<img");
+});
+test("unknown transfer length shows bytes without a fabricated percentage", async () => {
+  mountModels(document.querySelector("main")!, {
+    downloads: async () => [
+      {
+        id: "1",
+        state: "downloading",
+        bytes_done: 1048576,
+        total_bytes: null,
+        speed_bps: null,
+        eta_seconds: null,
+      },
+    ],
+    subscribeDownloads: () => () => {},
+    bootstrap: async () => ({ runtime: {} }),
+  } as unknown as NarratorClient);
+  await tick();
+  expect(document.querySelector(".indeterminate")).not.toBeNull();
+  expect(document.querySelector("[data-transfers]")!.textContent).toContain(
+    "1.0 MB",
+  );
+  expect(document.querySelector("[data-transfers]")!.textContent).not.toContain(
+    "%",
+  );
+});
+test("empty voice library is explained", async () => {
+  mountVoices(document.querySelector("main")!, {
+    voices: async () => ({ omnivoice: [], qwen: [] }),
+    subscribeRuntime: () => () => {},
+  } as unknown as NarratorClient);
+  await tick();
+  expect(document.body.textContent).toContain(t("noVoices"));
+});
+test("language switches headings and persists preference", () => {
+  setLocale("en");
+  expect(t("history")).toBe("History");
+  expect(localStorage.getItem("narrator.locale")).toBe("en");
+  setLocale("fr");
+  expect(t("history")).toBe("Historique");
+});
+test("advanced setup exposes Whisper paths required for voice cloning", async () => {
+  mountModels(document.querySelector("main")!, {
+    downloads: async () => [],
+    subscribeDownloads: () => () => {},
+    bootstrap: async () => ({ runtime: {} }),
+  } as unknown as NarratorClient);
+  await tick();
+  expect(document.querySelector("[name=qc_runtime_python]")).not.toBeNull();
+  expect(document.querySelector("[name=qc_model_path]")).not.toBeNull();
+});

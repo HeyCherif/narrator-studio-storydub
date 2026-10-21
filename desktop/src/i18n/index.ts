@@ -1,9 +1,169 @@
-export type Locale='fr'|'en';
-const messages={
- fr:{studio:'Studio',voices:'Voix',models:'Modèles',history:'Historique',settings:'Réglages',tagline:'Donnez de la voix à vos histoires.',studioTitle:'Votre prochaine histoire commence ici.',studioHint:'Écrivez, choisissez une voix et donnez vie à votre récit.',script:'Votre script',placeholder:'Une idée. Une histoire. Une voix.\n\nCollez votre texte ici…',generate:'Générer la narration',cancel:'Annuler',ready:'Prêt à créer',preparing:'Préparation…',engine:'Moteur',voice:'Voix',language:'Langue du texte',speed:'Vitesse',quality:'Qualité',setup:'Configurez les moteurs dans Modèles pour commencer.',selectVoice:'Choisir une voix',words:'mots',characters:'caractères',local:'Vos créations restent sur votre ordinateur.',voiceTitle:'Une voix pour chaque histoire.',voiceHint:'Retrouvez vos voix et créez un profil Qwen à partir d’un extrait.',clone:'Créer une voix',name:'Nom de la voix',reference:'Audio de référence',noVoices:'Aucune voix compatible pour le moment.',modelTitle:'La puissance, à votre rythme.',modelHint:'Réutilisez vos modèles existants ou installez Qwen depuis sa source officielle.',reuse:'Reprendre mon installation',download:'Télécharger Qwen',installed:'Fichiers présents',missing:'À configurer',runtime:'Moteur Python',model:'Dossier du modèle',details:'Configuration avancée',choose:'Choisir',save:'Appliquer',historyTitle:'Vos histoires prennent vie.',historyHint:'Écoutez, retrouvez et exportez vos narrations locales.',search:'Rechercher une narration…',emptyHistory:'Votre première narration vous attend.',unavailable:'Fichier absent',listen:'Écouter',export:'Exporter',folder:'Ouvrir le dossier',pause:'Pause',resume:'Reprendre',retry:'Réessayer',queued:'En attente',downloading:'Téléchargement',verifying:'Vérification',paused:'En pause',cancelled:'Annulé',error:'Erreur',complete:'Prêt',preview:'Aperçu web · Ouvrez l’application Windows pour utiliser les moteurs locaux.',appearance:'Interface',close:'Fermer',saved:'Enregistré',readError:'Impossible de lire ces données. Les fichiers originaux sont conservés.',notVerified:'Installation détectée ; empreintes non vérifiées.',official:'Source officielle · Qwen',reuseHint:'Choisissez le dossier de votre installation Narrator Studio. Les modèles et les fichiers audio ne seront pas déplacés.',modelWarn:'Un modèle installé ne remplace pas le moteur Python nécessaire à son exécution.',fileMax:'Audio de référence : 20 Mo maximum.',voiceAccepted:'Création de la voix en cours…'},
- en:{studio:'Studio',voices:'Voices',models:'Models',history:'History',settings:'Settings',tagline:'Give your stories a voice.',studioTitle:'Your next story starts here.',studioHint:'Write, choose a voice, and bring your story to life.',script:'Your script',placeholder:'An idea. A story. A voice.\n\nPaste your script here…',generate:'Generate narration',cancel:'Cancel',ready:'Ready to create',preparing:'Preparing…',engine:'Engine',voice:'Voice',language:'Script language',speed:'Speed',quality:'Quality',setup:'Set up your engines in Models to get started.',selectVoice:'Choose a voice',words:'words',characters:'characters',local:'Your creations stay on your computer.',voiceTitle:'A voice for every story.',voiceHint:'Find your voices and create a Qwen profile from a reference clip.',clone:'Create a voice',name:'Voice name',reference:'Reference audio',noVoices:'No compatible voices yet.',modelTitle:'Power at your own pace.',modelHint:'Reuse your existing models or install Qwen from its official source.',reuse:'Use my existing installation',download:'Download Qwen',installed:'Files detected',missing:'Setup needed',runtime:'Python runtime',model:'Model folder',details:'Advanced configuration',choose:'Choose',save:'Apply',historyTitle:'Your stories, brought to life.',historyHint:'Listen to, find, and export your local narrations.',search:'Find a narration…',emptyHistory:'Your first narration is waiting.',unavailable:'File missing',listen:'Listen',export:'Export',folder:'Open folder',pause:'Pause',resume:'Resume',retry:'Retry',queued:'Queued',downloading:'Downloading',verifying:'Verifying',paused:'Paused',cancelled:'Cancelled',error:'Error',complete:'Ready',preview:'Web preview · Open the Windows app to use local engines.',appearance:'Interface',close:'Close',saved:'Saved',readError:'Could not read this data. Original files are preserved.',notVerified:'Installation detected; checksums not verified.',official:'Official source · Qwen',reuseHint:'Choose your existing Narrator Studio installation folder. Models and audio files will not be moved.',modelWarn:'An installed model still needs a compatible Python runtime.',fileMax:'Reference audio: maximum 20 MB.',voiceAccepted:'Creating voice…'}
+export type Locale = "fr" | "en";
+const messages = {
+  fr: {
+    studio: "Studio",
+    voices: "Voix",
+    models: "Modèles",
+    history: "Historique",
+    settings: "Réglages",
+    tagline: "Donnez de la voix à vos histoires.",
+    studioTitle: "Votre prochaine histoire commence ici.",
+    studioHint: "Écrivez, choisissez une voix et donnez vie à votre récit.",
+    script: "Votre script",
+    placeholder: "Une idée. Une histoire. Une voix.\n\nCollez votre texte ici…",
+    generate: "Générer la narration",
+    cancel: "Annuler",
+    ready: "Prêt à créer",
+    preparing: "Préparation…",
+    engine: "Moteur",
+    voice: "Voix",
+    language: "Langue du texte",
+    speed: "Vitesse",
+    quality: "Qualité",
+    setup: "Configurez les moteurs dans Modèles pour commencer.",
+    selectVoice: "Choisir une voix",
+    words: "mots",
+    characters: "caractères",
+    local: "Vos créations restent sur votre ordinateur.",
+    voiceTitle: "Une voix pour chaque histoire.",
+    voiceHint:
+      "Retrouvez vos voix et créez un profil Qwen à partir d’un extrait.",
+    clone: "Créer une voix",
+    name: "Nom de la voix",
+    reference: "Audio de référence",
+    noVoices: "Aucune voix compatible pour le moment.",
+    modelTitle: "La puissance, à votre rythme.",
+    modelHint:
+      "Réutilisez vos modèles existants ou installez Qwen depuis sa source officielle.",
+    reuse: "Reprendre mon installation",
+    download: "Télécharger Qwen",
+    installed: "Fichiers présents",
+    missing: "À configurer",
+    runtime: "Moteur Python",
+    model: "Dossier du modèle",
+    details: "Configuration avancée",
+    choose: "Choisir",
+    save: "Appliquer",
+    historyTitle: "Vos histoires prennent vie.",
+    historyHint: "Écoutez, retrouvez et exportez vos narrations locales.",
+    search: "Rechercher une narration…",
+    emptyHistory: "Votre première narration vous attend.",
+    unavailable: "Fichier absent",
+    listen: "Écouter",
+    export: "Exporter",
+    folder: "Ouvrir le dossier",
+    pause: "Pause",
+    resume: "Reprendre",
+    retry: "Réessayer",
+    queued: "En attente",
+    downloading: "Téléchargement",
+    verifying: "Vérification",
+    paused: "En pause",
+    cancelled: "Annulé",
+    error: "Erreur",
+    complete: "Prêt",
+    preview:
+      "Aperçu web · Ouvrez l’application Windows pour utiliser les moteurs locaux.",
+    appearance: "Interface",
+    close: "Fermer",
+    saved: "Enregistré",
+    readError:
+      "Impossible de lire ces données. Les fichiers originaux sont conservés.",
+    notVerified: "Installation détectée ; empreintes non vérifiées.",
+    official: "Source officielle · Qwen",
+    reuseHint:
+      "Choisissez le dossier de votre installation Narrator Studio. Les modèles et les fichiers audio ne seront pas déplacés.",
+    modelWarn:
+      "Un modèle installé ne remplace pas le moteur Python nécessaire à son exécution.",
+    fileMax: "Audio de référence : 20 Mo maximum.",
+    voiceAccepted: "Création de la voix en cours…",
+  },
+  en: {
+    studio: "Studio",
+    voices: "Voices",
+    models: "Models",
+    history: "History",
+    settings: "Settings",
+    tagline: "Give your stories a voice.",
+    studioTitle: "Your next story starts here.",
+    studioHint: "Write, choose a voice, and bring your story to life.",
+    script: "Your script",
+    placeholder: "An idea. A story. A voice.\n\nPaste your script here…",
+    generate: "Generate narration",
+    cancel: "Cancel",
+    ready: "Ready to create",
+    preparing: "Preparing…",
+    engine: "Engine",
+    voice: "Voice",
+    language: "Script language",
+    speed: "Speed",
+    quality: "Quality",
+    setup: "Set up your engines in Models to get started.",
+    selectVoice: "Choose a voice",
+    words: "words",
+    characters: "characters",
+    local: "Your creations stay on your computer.",
+    voiceTitle: "A voice for every story.",
+    voiceHint:
+      "Find your voices and create a Qwen profile from a reference clip.",
+    clone: "Create a voice",
+    name: "Voice name",
+    reference: "Reference audio",
+    noVoices: "No compatible voices yet.",
+    modelTitle: "Power at your own pace.",
+    modelHint:
+      "Reuse your existing models or install Qwen from its official source.",
+    reuse: "Use my existing installation",
+    download: "Download Qwen",
+    installed: "Files detected",
+    missing: "Setup needed",
+    runtime: "Python runtime",
+    model: "Model folder",
+    details: "Advanced configuration",
+    choose: "Choose",
+    save: "Apply",
+    historyTitle: "Your stories, brought to life.",
+    historyHint: "Listen to, find, and export your local narrations.",
+    search: "Find a narration…",
+    emptyHistory: "Your first narration is waiting.",
+    unavailable: "File missing",
+    listen: "Listen",
+    export: "Export",
+    folder: "Open folder",
+    pause: "Pause",
+    resume: "Resume",
+    retry: "Retry",
+    queued: "Queued",
+    downloading: "Downloading",
+    verifying: "Verifying",
+    paused: "Paused",
+    cancelled: "Cancelled",
+    error: "Error",
+    complete: "Ready",
+    preview: "Web preview · Open the Windows app to use local engines.",
+    appearance: "Interface",
+    close: "Close",
+    saved: "Saved",
+    readError: "Could not read this data. Original files are preserved.",
+    notVerified: "Installation detected; checksums not verified.",
+    official: "Official source · Qwen",
+    reuseHint:
+      "Choose your existing Narrator Studio installation folder. Models and audio files will not be moved.",
+    modelWarn: "An installed model still needs a compatible Python runtime.",
+    fileMax: "Reference audio: maximum 20 MB.",
+    voiceAccepted: "Creating voice…",
+  },
 };
-let locale:Locale=localStorage.getItem('narrator.locale')==='en'?'en':'fr';
-export function getLocale(){return locale;}
-export function setLocale(value:Locale){locale=value;localStorage.setItem('narrator.locale',value);document.documentElement.lang=value;}
-export function t(key:keyof typeof messages.fr){return messages[locale][key];}
+let locale: Locale =
+  localStorage.getItem("narrator.locale") === "en" ? "en" : "fr";
+export function getLocale() {
+  return locale;
+}
+export function setLocale(value: Locale) {
+  locale = value;
+  localStorage.setItem("narrator.locale", value);
+  document.documentElement.lang = value;
+}
+export function t(key: keyof typeof messages.fr) {
+  return messages[locale][key];
+}
