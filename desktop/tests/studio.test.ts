@@ -33,3 +33,10 @@ test('draft survives remounting the screen',async()=>{
  mountStudio(document.querySelector('#app')!,client() as unknown as NarratorClient);await tick();
  expect(document.querySelector('textarea')!.value).toBe('Keep this draft');
 });
+
+test('returning to Studio restores the completed narration player',async()=>{
+ const fake={...client(),bootstrap:async()=>({runtime:{python_exists:true,model_exists:true},voices:[],active_engine:'omnivoice',job_id:'finished',job:{running:false,stage:'Finished',progress:100,result:{filename:'finished.wav'}}}),audioUrl:async()=>'/finished.wav'};
+ mountStudio(document.querySelector('#app')!,fake as unknown as NarratorClient);await tick();await tick();
+ expect(document.querySelector('audio')?.getAttribute('src')).toBe('/finished.wav');
+ expect(document.querySelector('[data-stage]')!.textContent).toBe('Finished');
+});

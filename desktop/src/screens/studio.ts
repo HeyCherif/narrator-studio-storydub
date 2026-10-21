@@ -45,6 +45,6 @@ export function mountStudio(container:HTMLElement,client:NarratorClient){
  });
  button.onclick=async()=>{if(button.disabled)return;busy=true;stage.textContent=t('preparing');q('[data-error]').textContent='';refresh();try{const accepted=await client.generate({text:text.value,engine:engine.value as Engine,voice_id:voice.value,language:q<HTMLSelectElement>('#script-language').value,speed:Number(q<HTMLInputElement>('#speed').value),steps:Number(q<HTMLSelectElement>('#quality').value)});jobId=accepted.job_id;}catch(error){busy=false;showError(q('[data-error]'),error);refresh();}};
  cancel.onclick=async()=>{cancel.disabled=true;try{await client.cancelGenerate();}catch(error){showError(q('[data-error]'),error);}finally{cancel.disabled=false;}};
- void client.bootstrap().then(value=>{if(!alive)return;data=value;engine.value=value.active_engine||'omnivoice';busy=!!value.job?.running;jobId=value.job_id||'';voices();}).catch(error=>{if(alive)showError(q('[data-error]'),error);});
+ void client.bootstrap().then(value=>{if(!alive)return;data=value;engine.value=value.active_engine||'omnivoice';busy=!!value.job?.running;jobId=value.job_id||'';stage.textContent=value.job?.stage||t('ready');q('[data-progress]').style.width=`${Math.max(0,Math.min(100,value.job?.progress||0))}%`;q('[data-error]').textContent=value.job?.error||'';if(value.job?.result?.filename)void result(value.job.result.filename);voices();}).catch(error=>{if(alive)showError(q('[data-error]'),error);});
  refresh();return()=>{alive=false;unsubscribe();};
 }

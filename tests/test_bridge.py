@@ -21,6 +21,15 @@ class BridgeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'unknown-command'):
             self.runtime.dispatch('__getattribute__', {})
 
+    def test_locked_library_returns_a_readable_protocol_error(self):
+        requests = '\n'.join(json.dumps({'id': i, 'command': c, 'payload': {}})
+                             for i, c in enumerate(('bootstrap', 'shutdown')))
+        result = subprocess.run([sys.executable, '-m', 'backend.bridge', '--library', self.tmp.name],
+                                input=requests+'\n', capture_output=True, text=True, timeout=30)
+        replies = [json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual(len(replies), 2)
+        self.assertIn('library-in-use', replies[0]['error']['message'])
+
     def test_bootstrap_does_not_load_models(self):
         result = self.runtime.dispatch('bootstrap', {})
         self.assertIn('runtime', result)
@@ -58,6 +67,17 @@ class BridgeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'text-required'):
             self.runtime.dispatch('generate', {'text': '  '})
         self.assertIsNone(self.runtime.core.worker.proc)
+
+    def test_new_job_does_not_reuse_previous_audio_result(self):
+        import threading
+        waiting = threading.Event()
+        self.runtime.core._set_job(result={'filename': 'previous.wav'})
+        self.runtime.core._warmup = lambda: waiting.wait(2)
+        try:
+            self.runtime.dispatch('generate', {'text': 'New narration'})
+            self.assertIsNone(self.runtime.core.get_job().get('result'))
+        finally:
+            waiting.set()
 
 
 if __name__ == '__main__': unittest.main()

@@ -44,13 +44,13 @@ class NarratorRuntime:
                 raise ValueError('text-too-large')
             self.job_id = uuid.uuid4().hex
             job_id = self.job_id
-            self.core._set_job(running=True, cancel_requested=False, error='', stage='Preparation', progress=0)
+            self.core._set_job(running=True, cancel_requested=False, result=None, error='', stage='Preparation', progress=0)
 
             def run():
                 try:
                     if kind == 'clone':
                         result = self.core.qwen_clone(payload)
-                        self.emit_job(job_id, {'running': False, 'stage': 'Voice ready', 'result': result, 'kind': 'clone'})
+                        self.core._set_job(running=False, stage='Voice ready', result=result, kind='clone')
                     else:
                         engine = payload.get('engine', self.core.active_engine)
                         if engine not in {'omnivoice', 'qwen'}: raise ValueError('invalid-engine')
