@@ -168,11 +168,22 @@ pub async fn transfer_file(
     let mut received = offset;
     progress(received);
     loop {
-        control.status()?;
+        if let Err(reason) = control.status() {
+            file.flush().await.map_err(|e| e.to_string())?;
+            file.sync_all().await.map_err(|e| e.to_string())?;
+            return Err(reason);
+        }
         let next = tokio::select! {chunk=stream.next()=>chunk,_=tokio::time::sleep(std::time::Duration::from_millis(100))=>continue};
         match next {
             Some(chunk) => {
-                let chunk = chunk.map_err(|e| e.to_string())?;
+                let chunk = match chunk {
+                    Ok(chunk) => chunk,
+                    Err(error) => {
+                        file.flush().await.map_err(|e| e.to_string())?;
+                        file.sync_all().await.map_err(|e| e.to_string())?;
+                        return Err(error.to_string());
+                    }
+                };
                 file.write_all(&chunk).await.map_err(|e| e.to_string())?;
                 received += chunk.len() as u64;
                 if spec.bytes.is_some_and(|size| received > size) {
