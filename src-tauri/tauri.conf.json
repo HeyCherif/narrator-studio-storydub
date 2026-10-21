@@ -21,21 +21,36 @@
     ],
     "security": {
       "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' asset: http://asset.localhost data:; media-src 'self' asset: http://asset.localhost; connect-src ipc: http://ipc.localhost",
-      "assetProtocol": { "enable": true, "scope": [] }
+      "assetProtocol": {
+        "enable": true,
+        "scope": []
+      }
     }
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
-    "externalBin": ["binaries/narrator-bridge"],
-    "icon": ["icons/icon.ico"],
+    "targets": [
+      "nsis"
+    ],
+    "externalBin": [
+      "binaries/narrator-bridge"
+    ],
+    "icon": [
+      "icons/icon.ico"
+    ],
     "shortDescription": "Local narration studio",
     "category": "Music",
     "windows": {
       "nsis": {
         "displayLanguageSelector": true,
-        "languages": ["English", "French"]
+        "languages": [
+          "English",
+          "French"
+        ]
       }
-    }
+    },
+    "resources": [
+      "resources/THIRD_PARTY_NOTICES.txt"
+    ]
   }
 }
